@@ -61,7 +61,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
       final serverUrl = await NativeService.getSetting('voice_server_url', def: 'http://192.168.1.100:8000');
       
       var request = http.MultipartRequest('POST', Uri.parse('$serverUrl/separate'));
-      request.files.add(await http.MultipartRequest.fromPath('file', path));
+      request.files.add(await http.MultipartFile.fromPath('file', path));
 
       var response = await request.send().timeout(const Duration(minutes: 5));
 
