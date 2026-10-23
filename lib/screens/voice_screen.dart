@@ -45,9 +45,12 @@ class _VoiceScreenState extends State<VoiceScreen> {
   }
 
   Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.audio);
-    if (result != null && result.files.single.path != null) {
-      _processAudio(result.files.single.path!);
+    // file_picker 13.x: `FilePicker.platform` was removed in favour of static methods.
+    // pickFile() returns a single PlatformFile? (null when the user cancels).
+    final file = await FilePicker.pickFile(type: FileType.audio);
+    final path = file?.path;
+    if (path != null) {
+      _processAudio(path);
     }
   }
 
