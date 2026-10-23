@@ -119,10 +119,11 @@ class _BuilderScreenState extends State<BuilderScreen> {
   Future<void> _install() async {
     final r = _result;
     if (r == null) return;
-    await Share.shareXFiles(
-      [XFile(r.apkPath)],
+    // share_plus 13.x API
+    await SharePlus.instance.share(ShareParams(
+      files: [XFile(r.apkPath)],
       text: 'فایل نصب ${r.repoName} — ساخته‌شده با Liberto',
-    );
+    ));
   }
 
   Widget _warn(String t) => Padding(
