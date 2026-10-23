@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "com.aichat.ai_chat_app"
-    compileSdk = flutter.compileSdkVersion
+    // Pinned to 36: flutter_plugin_android_lifecycle requires compileSdk >= 36
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     // C++ (NDK) — AI Chat native layer (SHA-256 + message IDs)
