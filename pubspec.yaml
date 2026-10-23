@@ -39,7 +39,8 @@ dependencies:
   http: ^1.2.0
 
   # Liberto: app-builder + media features
-  record: ^5.1.2
+  # NOTE: `record` removed - audio capture is done natively via Kotlin MediaRecorder
+  # (NativeService.startRecording). record_linux 0.7.2 was breaking the release build.
   image_picker: ^1.1.2
   file_picker: ^8.1.3
   video_player: ^2.9.1
