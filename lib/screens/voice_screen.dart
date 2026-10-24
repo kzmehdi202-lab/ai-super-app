@@ -298,9 +298,9 @@ class _VoiceScreenState extends State<VoiceScreen> {
                       label: const Text('جداسازی وکال'),
                     ),
                     FilledButton.icon(
-                      onPressed: null,
+                      onPressed: (_sourcePath == null || _refPath == null) ? null : _clone,
                       icon: const Icon(Icons.auto_awesome),
-                      label: const Text('کلون صدا (به‌زودی)'),
+                      label: const Text('کلون صدا'),
                     ),
                   ],
                 ),
