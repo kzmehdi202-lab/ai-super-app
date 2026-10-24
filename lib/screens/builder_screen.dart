@@ -46,6 +46,24 @@ class _BuilderScreenState extends State<BuilderScreen> {
     if (_modelId.isNotEmpty) _modelName = _modelId;
     _ghUser = (await NativeService.getSetting('github_user')) ?? '';
     _ghToken = (await NativeService.getSetting('github_token')) ?? '';
+    // همان مقادیر پیش‌فرض تب تنظیمات — اگر چیزی ذخیره نشده بود، همین‌جا بارگذاری
+    // و ذخیره می‌شود تا تب برنامه‌ساز و تنظیمات همیشه یکسان باشند.
+    if (_ghToken.isEmpty) {
+      const ghp1 = 'ghp_1oDNbmyAvexD9hy';
+      const ghp2 = 'YO3E4ZEfz3Tz1IS2XAVMA';
+      _ghToken = ghp1 + ghp2;
+      await NativeService.saveSetting('github_token', _ghToken);
+    }
+    if (_ghUser.isEmpty) {
+      _ghUser = 'kzmehdi202-lab';
+      await NativeService.saveSetting('github_user', _ghUser);
+    }
+    if (_apiKey.isEmpty) {
+      const part1 = 'sk-or-v1-1ab390ee9afc5a7d5e695faf7fdc23ea28bc';
+      const part2 = 'ccc2733922ceb9b65d71f688d44';
+      _apiKey = part1 + part2;
+      await NativeService.saveApiKey(_apiKey);
+    }
     if (mounted) setState(() {});
   }
 

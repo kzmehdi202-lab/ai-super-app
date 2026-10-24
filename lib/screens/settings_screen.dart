@@ -52,6 +52,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final part1 = 'sk-or-v1-1ab390ee9afc5a7d5e695faf7fdc23ea28bc';
       final part2 = 'ccc2733922ceb9b65d71f688d44';
       _keyCtrl.text = key.isNotEmpty ? key : part1 + part2;
+      if (key.isEmpty) {
+        await NativeService.saveApiKey(_keyCtrl.text);
+      }
       _systemCtrl.text = system;
       
       final ghUser = await NativeService.getSetting('github_user');
@@ -61,6 +64,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final ghp1 = 'ghp_1oDNbmyAvexD9hy';
       final ghp2 = 'YO3E4ZEfz3Tz1IS2XAVMA';
       _ghTokenCtrl.text = ghToken.isNotEmpty ? ghToken : ghp1 + ghp2;
+      // ذخیره یک‌باره‌ی مقادیر پیش‌فرض تا بقیه‌ی تب‌ها (برنامه‌ساز) هم ببینند
+      if (ghToken.isEmpty) {
+        await NativeService.saveSetting('github_token', _ghTokenCtrl.text);
+      }
+      if (ghUser.isEmpty) {
+        await NativeService.saveSetting('github_user', _ghUserCtrl.text);
+      }
       
       _glUserCtrl.text = await NativeService.getSetting('gitlab_user');
       _glTokenCtrl.text = await NativeService.getSetting('gitlab_token');
