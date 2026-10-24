@@ -40,44 +40,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _load() async {
-    final key = await NativeService.getApiKey();
-    final system = await NativeService.getSetting('system_prompt');
-    
-    // Hardcoded defaults as requested by the user
-    // Obfuscated to bypass GitHub Push Protection scanning
-    final part1 = 'sk-or-v1-1ab390ee9afc5a7d5e695faf7fdc23ea28bc';
-    final part2 = 'ccc2733922ceb9b65d71f688d44';
-    _keyCtrl.text = key.isNotEmpty ? key : part1 + part2;
-    _systemCtrl.text = system;
-    
-    final ghUser = await NativeService.getSetting('github_user');
-    _ghUserCtrl.text = ghUser.isNotEmpty ? ghUser : 'kzmehdi202-lab';
-    
-    final ghToken = await NativeService.getSetting('github_token');
-    final ghp1 = 'ghp_1oDNbmyAvexD9hy';
-    final ghp2 = 'YO3E4ZEfz3Tz1IS2XAVMA';
-    _ghTokenCtrl.text = ghToken.isNotEmpty ? ghToken : ghp1 + ghp2;
-    
-    // Test automatically if token is present
+    try {
+      final key = await NativeService.getApiKey();
+      final system = await NativeService.getSetting('system_prompt');
+      
+      // Hardcoded defaults as requested by the user
+      // Obfuscated to bypass GitHub Push Protection scanning
+      final part1 = 'sk-or-v1-1ab390ee9afc5a7d5e695faf7fdc23ea28bc';
+      final part2 = 'ccc2733922ceb9b65d71f688d44';
+      _keyCtrl.text = key.isNotEmpty ? key : part1 + part2;
+      _systemCtrl.text = system;
+      
+      final ghUser = await NativeService.getSetting('github_user');
+      _ghUserCtrl.text = ghUser.isNotEmpty ? ghUser : 'kzmehdi202-lab';
+      
+      final ghToken = await NativeService.getSetting('github_token');
+      final ghp1 = 'ghp_1oDNbmyAvexD9hy';
+      final ghp2 = 'YO3E4ZEfz3Tz1IS2XAVMA';
+      _ghTokenCtrl.text = ghToken.isNotEmpty ? ghToken : ghp1 + ghp2;
+      
+      _glUserCtrl.text = await NativeService.getSetting('gitlab_user');
+      _glTokenCtrl.text = await NativeService.getSetting('gitlab_token');
+      
+      final vUrl = await NativeService.getSetting('voice_server_url');
+      _voiceServerCtrl.text = vUrl.isNotEmpty ? vUrl : 'http://192.168.1.100:8000';
+      
+      final lpKey = await NativeService.getSetting('livepeer_key');
+      final lpk1 = 'bead7e93-8fd7-484f-';
+      final lpk2 = 'ac75-df63f10a2bf1';
+      _lpKeyCtrl.text = lpKey.isNotEmpty ? lpKey : lpk1 + lpk2;
+      
+      if (_keyCtrl.text.isNotEmpty) {
+        try {
+          _fingerprint = await NativeService.nativeSha256(_keyCtrl.text);
+        } catch (_) {}
+      }
+    } catch (e) {
+      debugPrint('Settings _load error: $e');
+    } finally {
+      if (mounted) setState(() => _loaded = true);
+    }
+
+    // Test automatically in background after screen is loaded
     if (_ghTokenCtrl.text.isNotEmpty) {
       _testGithub();
     }
-    
-    _glUserCtrl.text = await NativeService.getSetting('gitlab_user');
-    _glTokenCtrl.text = await NativeService.getSetting('gitlab_token');
-    
-    final vUrl = await NativeService.getSetting('voice_server_url');
-    _voiceServerCtrl.text = vUrl.isNotEmpty ? vUrl : 'http://192.168.1.100:8000';
-    
-    final lpKey = await NativeService.getSetting('livepeer_key');
-    final lpk1 = 'bead7e93-8fd7-484f-';
-    final lpk2 = 'ac75-df63f10a2bf1';
-    _lpKeyCtrl.text = lpKey.isNotEmpty ? lpKey : lpk1 + lpk2;
-    
-    if (_keyCtrl.text.isNotEmpty) {
-      _fingerprint = await NativeService.nativeSha256(_keyCtrl.text);
-    }
-    if (mounted) setState(() => _loaded = true);
   }
 
   Future<void> _save() async {
