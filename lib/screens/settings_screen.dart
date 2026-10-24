@@ -20,6 +20,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _glTokenCtrl = TextEditingController();
   final TextEditingController _voiceServerCtrl = TextEditingController();
   final TextEditingController _lpKeyCtrl = TextEditingController();
+  final TextEditingController _universalKeyCtrl = TextEditingController();
+  String _detectedPlatform = '';
+  String _universalStatus = '';
   bool _obscure = true;
   bool _ghObscure = true;
   bool _glObscure = true;
@@ -85,6 +88,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (_ghTokenCtrl.text.isNotEmpty) {
       _testGithub();
     }
+  }
+
+  void _detectAndApplyUniversalKey(String val) {
+    final t = val.trim();
+    if (t.isEmpty) {
+      setState(() {
+        _detectedPlatform = '';
+        _universalStatus = '';
+      });
+      return;
+    }
+    String plat = 'سایر / عمومی';
+    if (t.startsWith('ghp_') || t.startsWith('github_pat_')) {
+      plat = 'GitHub Token';
+      _ghTokenCtrl.text = t;
+    } else if (t.startsWith('sk-or-')) {
+      plat = 'OpenRouter API Key';
+      _keyCtrl.text = t;
+    } else if (t.startsWith('hf_')) {
+      plat = 'HuggingFace Token';
+      NativeService.saveSetting('huggingface_key', t);
+    } else if (t.startsWith('AIzaSy')) {
+      plat = 'Google / Gemini API Key';
+      NativeService.saveSetting('google_key', t);
+    } else if (t.startsWith('glpat-')) {
+      plat = 'GitLab Token';
+      _glTokenCtrl.text = t;
+    } else if (t.contains('-') && t.length >= 32) {
+      plat = 'Livepeer / UUID Key';
+      _lpKeyCtrl.text = t;
+    } else if (t.startsWith('gsk_')) {
+      plat = 'Groq API Key';
+      NativeService.saveSetting('groq_key', t);
+    } else if (t.startsWith('r8_')) {
+      plat = 'Replicate API Key';
+      NativeService.saveSetting('replicate_key', t);
+    } else {
+      plat = 'کلید عمومی / Grandmind / سفارشی';
+      NativeService.saveSetting('custom_api_key', t);
+    }
+    setState(() {
+      _detectedPlatform = plat;
+      _universalStatus = 'شناسایی شد: $plat (آماده ذخیره)';
+    });
   }
 
   Future<void> _save() async {
@@ -207,6 +254,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _glUserCtrl.dispose();
     _glTokenCtrl.dispose();
     _lpKeyCtrl.dispose();
+    _universalKeyCtrl.dispose();
     super.dispose();
   }
 
@@ -221,6 +269,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          Card(
+            elevation: 2,
+            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.auto_awesome, color: theme.colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Text('ورودی هوشمند کلیدها (Universal Key Ring)',
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'هر کلیدی (GitHub, Google, HuggingFace, OpenRouter, Grandmind و...) داری اینجا پیست کن، برنامه خودش نوعش رو تشخیص میده و ست میکنه.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _universalKeyCtrl,
+                    onChanged: _detectAndApplyUniversalKey,
+                    textDirection: TextDirection.ltr,
+                    decoration: InputDecoration(
+                      hintText: 'هر توکن یا کلیدی را اینجا وارد کن...',
+                      filled: true,
+                      fillColor: theme.colorScheme.surface,
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.check_circle_outline),
+                        onPressed: () {
+                          _detectAndApplyUniversalKey(_universalKeyCtrl.text);
+                          _save();
+                        },
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  if (_universalStatus.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _universalStatus,
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Card(
             elevation: 0,
             color: theme.colorScheme.surfaceContainerLow,

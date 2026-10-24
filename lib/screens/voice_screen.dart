@@ -66,7 +66,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
       var request = http.MultipartRequest('POST', Uri.parse('$serverUrl/separate'));
       request.files.add(await http.MultipartFile.fromPath('file', path));
 
-      var response = await request.send().timeout(const Duration(minutes: 5));
+      var response = await request.send().timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final respStr = await response.stream.bytesToString();
