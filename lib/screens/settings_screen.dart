@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import '../services/github_service.dart';
@@ -22,7 +24,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _lpKeyCtrl = TextEditingController();
   final TextEditingController _universalKeyCtrl = TextEditingController();
   String _detectedPlatform = '';
+  String _detectedStoreKey = '';
   String _universalStatus = '';
+  List<Map<String, String>> _ring = [];
   bool _obscure = true;
   bool _ghObscure = true;
   bool _glObscure = true;
@@ -46,42 +50,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final key = await NativeService.getApiKey();
       final system = await NativeService.getSetting('system_prompt');
-      
-      // Hardcoded defaults as requested by the user
-      // Obfuscated to bypass GitHub Push Protection scanning
-      final part1 = 'sk-or-v1-1ab390ee9afc5a7d5e695faf7fdc23ea28bc';
-      final part2 = 'ccc2733922ceb9b65d71f688d44';
-      _keyCtrl.text = key.isNotEmpty ? key : part1 + part2;
-      if (key.isEmpty) {
-        await NativeService.saveApiKey(_keyCtrl.text);
-      }
+
+      // بدون مقدار هاردکد: فیلدها دقیقاً همان چیزی را نشان می‌دهند که
+      // ذخیره شده. خالی = واقعاً خالی. پر/حذف/جایگزینی فقط با اقدام کاربر.
+      _keyCtrl.text = key;
       _systemCtrl.text = system;
-      
-      final ghUser = await NativeService.getSetting('github_user');
-      _ghUserCtrl.text = ghUser.isNotEmpty ? ghUser : 'kzmehdi202-lab';
-      
-      final ghToken = await NativeService.getSetting('github_token');
-      final ghp1 = 'ghp_1oDNbmyAvexD9hy';
-      final ghp2 = 'YO3E4ZEfz3Tz1IS2XAVMA';
-      _ghTokenCtrl.text = ghToken.isNotEmpty ? ghToken : ghp1 + ghp2;
-      // ذخیره یک‌باره‌ی مقادیر پیش‌فرض تا بقیه‌ی تب‌ها (برنامه‌ساز) هم ببینند
-      if (ghToken.isEmpty) {
-        await NativeService.saveSetting('github_token', _ghTokenCtrl.text);
-      }
-      if (ghUser.isEmpty) {
-        await NativeService.saveSetting('github_user', _ghUserCtrl.text);
-      }
-      
+
+      _ghUserCtrl.text = await NativeService.getSetting('github_user');
+      _ghTokenCtrl.text = await NativeService.getSetting('github_token');
+
       _glUserCtrl.text = await NativeService.getSetting('gitlab_user');
       _glTokenCtrl.text = await NativeService.getSetting('gitlab_token');
-      
-      final vUrl = await NativeService.getSetting('voice_server_url');
-      _voiceServerCtrl.text = vUrl.isNotEmpty ? vUrl : 'http://192.168.1.100:8000';
-      
-      final lpKey = await NativeService.getSetting('livepeer_key');
-      final lpk1 = 'bead7e93-8fd7-484f-';
-      final lpk2 = 'ac75-df63f10a2bf1';
-      _lpKeyCtrl.text = lpKey.isNotEmpty ? lpKey : lpk1 + lpk2;
+
+      _voiceServerCtrl.text = await NativeService.getSetting('voice_server_url');
+
+      _lpKeyCtrl.text = await NativeService.getSetting('livepeer_key');
+
+      try {
+        final rawRing = await NativeService.getSetting('token_ring');
+        if (rawRing.isNotEmpty) {
+          final list = jsonDecode(rawRing) as List;
+          _ring = list
+              .map((e) => Map<String, String>.from((e as Map).map(
+                  (k, v) => MapEntry(k.toString(), v.toString()))))
+              .toList();
+        }
+      } catch (_) {
+        _ring = [];
+      }
       
       if (_keyCtrl.text.isNotEmpty) {
         try {
@@ -93,11 +89,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } finally {
       if (mounted) setState(() => _loaded = true);
     }
-
-    // Test automatically in background after screen is loaded
-    if (_ghTokenCtrl.text.isNotEmpty) {
-      _testGithub();
-    }
   }
 
   void _detectAndApplyUniversalKey(String val) {
@@ -105,43 +96,121 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (t.isEmpty) {
       setState(() {
         _detectedPlatform = '';
+        _detectedStoreKey = '';
         _universalStatus = '';
       });
       return;
     }
     String plat = 'سایر / عمومی';
+    String storeKey = 'custom_api_key';
     if (t.startsWith('ghp_') || t.startsWith('github_pat_')) {
       plat = 'GitHub Token';
+      storeKey = 'github_token';
       _ghTokenCtrl.text = t;
     } else if (t.startsWith('sk-or-')) {
       plat = 'OpenRouter API Key';
+      storeKey = 'openrouter';
       _keyCtrl.text = t;
     } else if (t.startsWith('hf_')) {
       plat = 'HuggingFace Token';
+      storeKey = 'huggingface_key';
       NativeService.saveSetting('huggingface_key', t);
     } else if (t.startsWith('AIzaSy')) {
       plat = 'Google / Gemini API Key';
+      storeKey = 'google_key';
       NativeService.saveSetting('google_key', t);
     } else if (t.startsWith('glpat-')) {
       plat = 'GitLab Token';
+      storeKey = 'gitlab_token';
       _glTokenCtrl.text = t;
     } else if (t.contains('-') && t.length >= 32) {
       plat = 'Livepeer / UUID Key';
+      storeKey = 'livepeer_key';
       _lpKeyCtrl.text = t;
     } else if (t.startsWith('gsk_')) {
       plat = 'Groq API Key';
+      storeKey = 'groq_key';
       NativeService.saveSetting('groq_key', t);
     } else if (t.startsWith('r8_')) {
       plat = 'Replicate API Key';
+      storeKey = 'replicate_key';
       NativeService.saveSetting('replicate_key', t);
     } else {
       plat = 'کلید عمومی / Grandmind / سفارشی';
+      storeKey = 'custom_api_key';
       NativeService.saveSetting('custom_api_key', t);
     }
     setState(() {
       _detectedPlatform = plat;
-      _universalStatus = 'شناسایی شد: $plat (آماده ذخیره)';
+      _detectedStoreKey = storeKey;
+      _universalStatus = 'شناسایی شد: $plat — دکمه ✓ برای افزودن به لیست کلیدها';
     });
+  }
+
+  Future<void> _commitUniversalKey() async {
+    final t = _universalKeyCtrl.text.trim();
+    if (t.isEmpty) {
+      setState(() => _universalStatus = '⚠️ اول کلید را در کادر بنویسید');
+      return;
+    }
+    _detectAndApplyUniversalKey(t);
+    final masked = t.length > 10
+        ? '${t.substring(0, 6)}…${t.substring(t.length - 4)}'
+        : t;
+    final already = _ring.any((e) => e['masked'] == masked);
+    if (!already) {
+      setState(() => _ring.add({
+        'name': _detectedPlatform.isEmpty ? 'کلید' : _detectedPlatform,
+        'masked': masked,
+        'key': _detectedStoreKey,
+      }));
+    }
+    await NativeService.saveSetting('token_ring', jsonEncode(_ring));
+    _universalKeyCtrl.clear();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(already ? 'این کلید قبلاً در لیست است' : 'کلید اضافه و ذخیره شد ✓')),
+      );
+    }
+    setState(() => _universalStatus = '');
+  }
+
+  Future<void> _removeRing(int i) async {
+    if (i < 0 || i >= _ring.length) return;
+    final k = _ring[i]['key'] ?? '';
+    if (k == 'openrouter') {
+      await NativeService.deleteApiKey();
+      _keyCtrl.clear();
+      _fingerprint = '';
+    } else if (k == 'github_token') {
+      _ghTokenCtrl.clear();
+      await NativeService.saveSetting('github_token', '');
+    } else if (k == 'gitlab_token') {
+      _glTokenCtrl.clear();
+      await NativeService.saveSetting('gitlab_token', '');
+    } else if (k == 'livepeer_key') {
+      _lpKeyCtrl.clear();
+      await NativeService.saveSetting('livepeer_key', '');
+    } else if (k.isNotEmpty) {
+      await NativeService.saveSetting(k, '');
+    }
+    setState(() => _ring.removeAt(i));
+    await NativeService.saveSetting('token_ring', jsonEncode(_ring));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('کلید حذف شد ✕')),
+      );
+    }
+  }
+
+  Future<void> _moveRing(int i, int d) async {
+    final j = i + d;
+    if (i < 0 || j < 0 || j >= _ring.length) return;
+    setState(() {
+      final e = _ring.removeAt(i);
+      _ring.insert(j, e);
+    });
+    await NativeService.saveSetting('token_ring', jsonEncode(_ring));
   }
 
   Future<void> _save() async {
@@ -311,10 +380,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       fillColor: theme.colorScheme.surface,
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.check_circle_outline),
-                        onPressed: () {
-                          _detectAndApplyUniversalKey(_universalKeyCtrl.text);
-                          _save();
-                        },
+                        onPressed: _commitUniversalKey,
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -332,6 +398,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         fontSize: 13,
                       ),
                     ),
+                  ],
+                  if (_ring.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Text('کلیدهای ذخیره‌شده:',
+                        style: theme.textTheme.labelLarge),
+                    ..._ring.asMap().entries.map((en) {
+                      final i = en.key;
+                      final e = en.value;
+                      return ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                        title: Text(e['name'] ?? 'کلید',
+                            style: const TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.bold)),
+                        subtitle: Text(e['masked'] ?? '',
+                            style: const TextStyle(
+                                fontSize: 11, fontFamily: 'monospace')),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.arrow_upward, size: 16),
+                              tooltip: 'بالا',
+                              visualDensity: VisualDensity.compact,
+                              onPressed: () => _moveRing(i, -1),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.arrow_downward, size: 16),
+                              tooltip: 'پایین',
+                              visualDensity: VisualDensity.compact,
+                              onPressed: () => _moveRing(i, 1),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline,
+                                  size: 18, color: Colors.deepOrange),
+                              tooltip: 'حذف کامل',
+                              visualDensity: VisualDensity.compact,
+                              onPressed: () => _removeRing(i),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                   ],
                 ],
               ),
