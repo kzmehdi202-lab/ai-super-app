@@ -31,10 +31,12 @@ class GitHubService {
       };
 
   /// Verifies the token; returns the account login name.
+  /// No hardcoded fallback: the token must come from secure storage.
   Future<String> verifyToken(String token) async {
-    final ghp1 = 'ghp_1oDNbmyAvexD9hy';
-    final ghp2 = 'YO3E4ZEfz3Tz1IS2XAVMA';
-    final t = token.isNotEmpty ? token : ghp1 + ghp2;
+    final t = token.trim();
+    if (t.isEmpty) {
+      throw GitHubError('توکن GitHub وارد نشده — از تب «تنظیمات» وارد کن.');
+    }
     final res = await http.get(Uri.parse('$_api/user'), headers: _h(t))
         .timeout(const Duration(seconds: 30));
     if (res.statusCode != 200) {

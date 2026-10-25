@@ -46,12 +46,7 @@ class _BuilderScreenState extends State<BuilderScreen> {
     if (_modelId.isNotEmpty) _modelName = _modelId;
     _ghUser = (await NativeService.getSetting('github_user')) ?? '';
     _ghToken = (await NativeService.getSetting('github_token')) ?? '';
-    if (_apiKey.isEmpty) {
-      const part1 = 'sk-or-v1-1ab390ee9afc5a7d5e695faf7fdc23ea28bc';
-      const part2 = 'ccc2733922ceb9b65d71f688d44';
-      _apiKey = part1 + part2;
-      await NativeService.saveApiKey(_apiKey);
-    }
+    // بدون کلید هاردکد: کلید فقط از حافظهٔ امن خوانده می‌شود
     if (mounted) setState(() {});
   }
 

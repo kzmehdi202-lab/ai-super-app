@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'api_url_normalizer.dart';
 import 'app_templates.dart';
 import 'openrouter_service.dart';
 
@@ -11,6 +12,8 @@ class GeneratedProject {
     required this.label,
     required this.description,
     required this.files,
+    this.urlFixes = const [],
+    this.urlIssues = const [],
   });
 
   final String appName;
@@ -19,6 +22,10 @@ class GeneratedProject {
   final String description;
   /// path -> content (rendered, ready to push)
   final Map<String, String> files;
+  /// آدرس‌های API که خودکار اصلاح شدند
+  final List<String> urlFixes;
+  /// آدرس‌هایی که هنوز مشکوک‌اند
+  final List<String> urlIssues;
 
   String get appId => 'com.liberto.$slug';
 }
@@ -136,6 +143,25 @@ class CodeGenerator {
         allPaths[i]: (byPath[allPaths[i]] ?? _emptyExtra()),
     };
 
+    // --- اصلاح خودکار آدرس‌های API که مدل بد نوشته ---
+    final fixes = <String>[];
+    final issues = <String>[];
+    final repaired = <String, String>{};
+    for (final e in files.entries) {
+      if (!ApiUrlNormalizer.isCode(e.key)) {
+        repaired[e.key] = e.value;
+        continue;
+      }
+      final r = ApiUrlNormalizer.apply(e.value);
+      repaired[e.key] = r.code;
+      for (final f in r.fixes) {
+        fixes.add('${e.key}: ${f.label} (${f.count}×)');
+      }
+      for (final s2 in r.stillSuspicious) {
+        issues.add('${e.key}: $s2');
+      }
+    }
+
     final appName = (json!['app_name'] as String?) ?? 'Liberto App';
     final outLabel = (json['label'] as String?) ?? label;
     final outDesc = (json['description'] as String?) ??
@@ -146,7 +172,9 @@ class CodeGenerator {
       slug: slug,
       label: outLabel,
       description: outDesc,
-      files: files,
+      files: repaired,
+      urlFixes: fixes,
+      urlIssues: issues,
     );
   }
 

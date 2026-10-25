@@ -50,7 +50,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final unc = await NativeService.getSetting('uncensored', def: '1');
     if (!mounted) return;
     setState(() {
-      _hasKey = key.isNotEmpty || 'sk-or-v1-1ab390ee9afc5a7d5e695faf7fdc23ea28bcccc2733922ceb9b65d71f688d44'.isNotEmpty;
+      _hasKey = (key ?? '').trim().isNotEmpty;
       if (modelId.isNotEmpty) _modelId = modelId;
       _systemPrompt = system;
       _uncensored = unc != '0';
@@ -90,11 +90,10 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
-    var key = await NativeService.getApiKey();
-    if (key.isEmpty) {
-      final p1 = 'sk-or-v1-1ab390ee9afc5a7d5e695faf7fdc23ea28bc';
-      final p2 = 'ccc2733922ceb9b65d71f688d44';
-      key = p1 + p2; // Hardcoded fallback
+    final key = (await NativeService.getApiKey()) ?? '';
+    if (key.trim().isEmpty) {
+      _showError('کلید OpenRouter ذخیره نشده — از تنظیمات وارد کن.');
+      return;
     }
     final history = _messages.map((m) => m.toApiMap()).toList();
     history.add({'role': 'user', 'content': text});

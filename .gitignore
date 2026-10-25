@@ -51,3 +51,6 @@ app.*.map.json
 **/android/.gradle/
 **/android/local.properties
 **/android/key.properties
+
+# کلیدهای پیش‌فرض محلی — هرگز commit نشوند
+lib/services/default_keys.dart
