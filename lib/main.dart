@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'screens/builder_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/settings_screen.dart';
-import 'screens/video_screen.dart';
-import 'screens/voice_screen.dart';
 
 void main() {
   runApp(const LibertoApp());
@@ -44,8 +42,6 @@ class _HomeState extends State<_Home> {
         index: _tab,
         children: const [
           ChatScreen(),
-          VoiceScreen(),
-          VideoScreen(),
           BuilderScreen(),
           SettingsScreen(),
         ],
@@ -58,16 +54,6 @@ class _HomeState extends State<_Home> {
             icon: Icon(Icons.chat_bubble_outline_rounded),
             selectedIcon: Icon(Icons.chat_bubble_rounded),
             label: 'چت',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.mic_none_rounded),
-            selectedIcon: Icon(Icons.mic_rounded),
-            label: 'صدا',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.video_library_outlined),
-            selectedIcon: Icon(Icons.video_library_rounded),
-            label: 'ویدیو',
           ),
           NavigationDestination(
             icon: Icon(Icons.construction_outlined),
