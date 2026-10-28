@@ -154,6 +154,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     }
     _detectAndApplyUniversalKey(t);
+    // فوری ذخیره کن تا برنامه‌ساز بلافاصله بتواند از توکن استفاده کند
+    if (_detectedStoreKey == 'github_token') {
+      await NativeService.saveSetting('github_token', t);
+    } else if (_detectedStoreKey == 'openrouter') {
+      await NativeService.saveApiKey(t);
+    } else if (_detectedStoreKey == 'gitlab_token') {
+      await NativeService.saveSetting('gitlab_token', t);
+    } else if (_detectedStoreKey == 'livepeer_key') {
+      await NativeService.saveSetting('livepeer_key', t);
+    }
     final masked = t.length > 10
         ? '${t.substring(0, 6)}…${t.substring(t.length - 4)}'
         : t;
@@ -226,6 +236,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await NativeService.saveSetting('uncensored', _uncensored ? '1' : '0');
     await NativeService.saveSetting('voice_server_url', _voiceServerCtrl.text.trim());
     await NativeService.saveSetting('livepeer_key', _lpKeyCtrl.text.trim());
+    await NativeService.saveSetting('github_user', _ghUserCtrl.text.trim());
+    await NativeService.saveSetting('github_token', _ghTokenCtrl.text.trim());
+    await NativeService.saveSetting('gitlab_user', _glUserCtrl.text.trim());
+    await NativeService.saveSetting('gitlab_token', _glTokenCtrl.text.trim());
     if (mounted) {
       setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(
