@@ -282,6 +282,11 @@ class _BuilderScreenState extends State<BuilderScreen> {
         title: const Text('Liberto — سازنده‌ی برنامه'),
         actions: [
           IconButton(
+            tooltip: 'بروزرسانی توکن‌ها',
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: _busy ? null : () => _loadSettings(),
+          ),
+          IconButton(
             tooltip: 'مدل هوش مصنوعی',
             icon: const Icon(Icons.smart_toy_rounded),
             onPressed: _busy ? null : _openModelPicker,
@@ -328,6 +333,12 @@ class _BuilderScreenState extends State<BuilderScreen> {
                         label: const Text('تعویض یا وارد کردن توکن جدید (اگر قبلی مسدود شد)'),
                         style: TextButton.styleFrom(foregroundColor: Colors.orange.shade800),
                       ),
+                    ),
+                  if (_apiKey.isEmpty || _ghToken.isEmpty)
+                    TextButton.icon(
+                      onPressed: () => _loadSettings(),
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('توکن را ذخیره کردی؟ اینجا بزن تا دوباره خوانده شود'),
                     ),
                   FilledButton.icon(
                     onPressed: _ready ? _start : null,
